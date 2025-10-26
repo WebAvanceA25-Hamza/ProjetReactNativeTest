@@ -1,0 +1,4 @@
+appId: host.exp.exponent
+---
+- runFlow: ./flows/login_flow.yaml
+- runFlow: ./flows/exit_flow.yaml

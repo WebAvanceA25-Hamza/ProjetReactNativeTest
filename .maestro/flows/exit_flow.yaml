@@ -1,0 +1,7 @@
+appId: host.exp.exponent
+---
+#- launchApp
+# ⚠️ Assure-toi que ton app Expo est déjà ouverte dans l’émulateur avant d’exécuter ce test.
+#- stop app
+- tapOn: "logoutButton"
+- assertVisible: "Se connecter"
