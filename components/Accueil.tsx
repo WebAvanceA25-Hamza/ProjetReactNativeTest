@@ -17,6 +17,7 @@ type RootStackParamList = {
     boatList?: Boat[];
   };
   UpdateBoat: { boatid: string };
+  Autresnavigations: { idBoat: string };
 };
 
 type AccueilRouteProp = RouteProp<RootStackParamList, "AccueilHome">;
@@ -44,7 +45,8 @@ export default function Accueil({ route }: { route: AccueilRouteProp }) {
   const { POST, DELETE, GET } = useFetch();
   const tokenStorage = useLocalStorage<string>("authToken");
   const isFocused = useIsFocused();
-const getToken = async (): Promise<string | null> => await tokenStorage.getItem();
+
+  const getToken = async (): Promise<string | null> => await tokenStorage.getItem();
   type TokenPayload = {
     email: string;
     isAdmin: boolean;
@@ -67,49 +69,76 @@ if (token) {
     if (isFocused) fetchBoats();
     getPorts();
   }, [isFocused, stateAddOrDeleteBoat]);
-  
-const handleDeleteSelected = async () => {
-  try {
-    await Promise.all(selectedBoats.map((boat) => handleDelete(boat.id)));
-    setSelectedBoats([]);
-  } catch (error) {
-    console.error("Erreur lors de la suppression des bateaux sélectionnés :", error);
-  }
-};
- const handleNavigate = () => {
-    try {
-      for (const Boat of selectedBoats) {
-        navigateBoat(Boat.id);
-      }
-    } catch (error) {
-      console.error("Erreur lors de la navigation des bateaux :", error);
-    }
-  };
-  const navigateBoat = async (idBoat: string) => {
-  console.log("Navigation du bateau avec l'ID :", idBoat);
-  console.log("je susi entree dans navigate boat");
-    if (!idBoat) {
-      alert("Veuillez remplir tous les champs !");
+  useEffect(() => { 
+    setSelectedBoats(boatList);
+getPorts();
+  }, []);
+
+  const handleSubmit = async () => {
+    if (!name || !goldCargo || !captain || !crewSize) {
+      Alert.alert("Erreur", "Veuillez remplir tous les champs du formulaire !");
       return;
     }
+
     try {
       const token = await getToken();
-        console.log("voici mon token ",token);
-           console.log("arrive a mon ships/send");
-  await POST(`/ships/send/${encodeURIComponent(destination)}`, 
-  { id: idBoat },  // corps
-  { Authorization: `Bearer ${token}` } // headers
-);
-
-      alert(`Bateau ${idBoat} envoyé vers ${destination} !`);
-         navigation.goBack(); 
+      const newBoat: BoatRequest = {
+        name,
+        goldCargo: parseInt(goldCargo, 10),
+        captain,
+        status,
+        crewSize: parseInt(crewSize, 10),
+      };
+      await POST<BoatRequest>("/ships", newBoat, { Authorization: `Bearer ${token}` });
+      Alert.alert("Succès", "Bateau ajouté avec succès !");
+      setStateAddOrDeleteBoat(!stateAddOrDeleteBoat);
     } catch (error) {
-      console.error("Erreur lors de l'envoi du bateau :", error);
-      alert("Échec de l'envoi du bateau. Vérifiez la console pour plus d'infos.");
-         navigation.goBack(); 
+      console.error("Erreur lors de l'ajout du bateau :", error);
     }
   };
-  const handleAddequipage = async () => {
+const toggleSelectBoat = (id: string) => {
+  setSelectedBoats((prevSelectedBoats) => {
+    const isSelected = prevSelectedBoats.some((boat) => boat.id === id);
+
+    if (isSelected) {
+      // Retire le bateau s'il était déjà sélectionné
+      return prevSelectedBoats.filter((boat) => boat.id !== id);
+    } else {
+      // Ajoute le bateau correspondant à l'id sélectionné
+      const boatToAdd = boatList.find((boat) => boat.id === id);
+      return boatToAdd ? [...prevSelectedBoats, boatToAdd] : prevSelectedBoats;
+    }
+  });
+};
+  const handleDelete = async (id: string) => {
+    try {
+      const token = await getToken();
+      console.log("Suppression du bateau avec l'ID :", id);
+      await DELETE(`/ships/${id}`, { Authorization: `Bearer ${token}` });
+      Alert.alert("Succès", "Bateau supprimé avec succès !");
+      setStateAddOrDeleteBoat(!stateAddOrDeleteBoat);
+    } catch (error) {
+      console.error("Erreur lors de la suppression :", error);
+    }
+  };
+
+  const handleUpdate = (id:string) => {
+    navigation.navigate("UpdateBoat", { boatid: id });
+  };
+
+  // Récupérer les ports disponibles
+  const getPorts = async () => {
+    try {
+      const token = await getToken();
+      const portsList = await GET<string[]>("/ships/send/userlist", {
+        Authorization: `Bearer ${token}`,
+      });
+      setPorts(portsList || []);
+    } catch (error) {
+      console.error("Erreur lors de la récupération des ports :", error);
+    }
+  };
+const handleAddequipage = async () => {
   const token = await getToken();
   const crewToAdd = Number(nombreEquipage); // convertir en nombre si c'est une string
 
@@ -164,48 +193,70 @@ tout seul dans le body si ton backend attend un objet avec une clé spécifique.
     { Authorization: `Bearer ${token}` } // <-- headers
   );
 };
-  const getPorts = async () => {
+
+  const handleNavigate = () => {
+    try {
+      for (const Boat of selectedBoats) {
+        navigateBoat(Boat.id);
+      }
+    } catch (error) {
+      console.error("Erreur lors de la navigation des bateaux :", error);
+    }
+  };
+const navigateBoat = async (idBoat: string) => {
+  console.log("Navigation du bateau avec l'ID :", idBoat);
+  console.log("je susi entree dans navigate boat");
+    if (!idBoat) {
+      alert("Veuillez remplir tous les champs !");
+      return;
+    }
     try {
       const token = await getToken();
-      const portsList = await GET<string[]>("/ships/send/userlist", {
-        Authorization: `Bearer ${token}`,
-      });
-      setPorts(portsList || []);
+        console.log("voici mon token ",token);
+           console.log("arrive a mon ships/send");
+  await POST(`/ships/send/${encodeURIComponent(destination)}`, 
+  { id: idBoat },  // corps
+  { Authorization: `Bearer ${token}` } // headers
+);
+
+      alert(`Bateau ${idBoat} envoyé vers ${destination} !`);
+         navigation.goBack(); 
     } catch (error) {
-      console.error("Erreur lors de la récupération des ports :", error);
+      console.error("Erreur lors de l'envoi du bateau :", error);
+      alert("Échec de l'envoi du bateau. Vérifiez la console pour plus d'infos.");
+         navigation.goBack(); 
     }
   };
 
-  const handleDelete = async (id: string) => {
-    try {
-      const token = await getToken();
-      console.log("Suppression du bateau avec l'ID :", id);
-      await DELETE(`/ships/${id}`, { Authorization: `Bearer ${token}` });
-      Alert.alert("Succès", "Bateau supprimé avec succès !");
-      setStateAddOrDeleteBoat(!stateAddOrDeleteBoat);
-    } catch (error) {
-      console.error("Erreur lors de la suppression :", error);
-    }
-  };
-
-  const handleUpdate = (id:string) => {
-    navigation.navigate("UpdateBoat", { boatid: id });
-  };
-
-const toggleSelectBoat = (id: string) => {
-  setSelectedBoats((prevSelectedBoats) => {
-    const isSelected = prevSelectedBoats.some((boat) => boat.id === id);
-
-    if (isSelected) {
-      // Retire le bateau s'il était déjà sélectionné
-      return prevSelectedBoats.filter((boat) => boat.id !== id);
-    } else {
-      // Ajoute le bateau correspondant à l'id sélectionné
-      const boatToAdd = boatList.find((boat) => boat.id === id);
-      return boatToAdd ? [...prevSelectedBoats, boatToAdd] : prevSelectedBoats;
-    }
-  });
+const handleDeleteSelected = async () => {
+  try {
+    await Promise.all(selectedBoats.map((boat) => handleDelete(boat.id)));
+    setSelectedBoats([]);
+  } catch (error) {
+    console.error("Erreur lors de la suppression des bateaux sélectionnés :", error);
+  }
 };
+
+
+  const handleTransfer = async () => {
+    if (!nombreOr || selectedBoats.length < 2) {
+      Alert.alert("Erreur", "Veuillez remplir tous les champs !");
+      return;
+    }
+    try {
+      const token = await getToken();
+      await POST(`/transferGold`, {
+        amount: parseInt(nombreOr, 10),
+        fromBoatId: selectedBoats[0],
+        toBoatId: selectedBoats[1],
+      }, { Authorization: `Bearer ${token}` });
+      Alert.alert("Succès", `Transfert de ${nombreOr} or effectué !`);
+      setIsTransfert(!isTransfert);
+    } catch (error) {
+      console.error("Erreur lors du transfert :", error);
+    }
+  };
+
   const handleLogout = async () => {
     try {
       const response = await POST<user, { token: string }>("/logout", { username: userName, password });
@@ -219,7 +270,15 @@ const toggleSelectBoat = (id: string) => {
   return (
     <ScrollView contentContainerStyle={styles.container}>
       <Text style={styles.title} testID="accueilHomeTitle">Bienvenue {userName} 🎉</Text>
-{boatListe.map((boat) => (
+     {selectedBoats.length > 0 ? (
+  <Text style={styles.subtext}>Nombre de bateaux : {boatListe.length}</Text>
+) : (
+  <Text style={styles.subtext}>Aucun bateau</Text>
+)}
+
+     
+
+      {boatListe.map((boat) => (
         <View key={boat.id} style={styles.boatContainer}>
           <View style={styles.boatHeader}>
             <Text style={styles.subtext} testID={`boat-name-${boat.id}`}>{boat.name}</Text>
@@ -245,7 +304,9 @@ const toggleSelectBoat = (id: string) => {
           testID="buttonSupprimerSelection"
         />
       )}
-       {!isAdmin && selectedBoats.length > 0 && (
+
+      {/* Partie pour un pirate normal */}
+      {!isAdmin && selectedBoats.length > 0 && (
         <>
         <Text>Voici la liste des ports dispoinbles des utilisateurs </Text>
         {ports.map((port) => (
@@ -287,6 +348,54 @@ const toggleSelectBoat = (id: string) => {
         </>
       )}
 
+      {/* Partie pour un amiral pirate */}
+      {isAdmin && (
+        <>
+          <Text style={styles.title}>Formulaire Bateau</Text>
+          <TextInput placeholder="Nom du bateau" value={name} onChangeText={setName} style={styles.input}     testID="NomduBateauAjoutInput" />
+          <TextInput placeholder="Capitaine" value={captain} onChangeText={setCaptain} style={styles.input}         testID="CapitaineAjoutInput" />
+          <TextInput
+            placeholder="Or dans la cargaison"
+            value={goldCargo}
+            onChangeText={setGoldCargo}
+            keyboardType="numeric"
+            style={styles.input}
+           testID="OrDansLaCargaisonInputAjout"
+          />
+          <TextInput
+            placeholder="Taille de l'équipage"
+            value={crewSize}
+            onChangeText={setCrewSize}
+            keyboardType="numeric"
+            style={styles.input}
+            testID="TailleDeLEquipageInputAjout"
+          />
+          <Text style={{ marginBottom: 5 }}>Statut :</Text>
+          <Picker selectedValue={status} onValueChange={(value: Boat["status"]) => setStatus(value)} style={styles.input}   testID="StatusInput">
+            <Picker.Item label="Docked" value="docked"  testID="DockedStatusOption"/>
+            <Picker.Item label="Sailing" value="sailing"  testID="SailingStatusOption" />
+            <Picker.Item label="Looking For A Fight" value="lookingForAFight"     testID="FightStatusOption"/>
+          </Picker>
+         <TouchableOpacity
+  testID="buttonAjouterBateau"
+  onPress={handleSubmit}
+  style={{ padding: 10, backgroundColor: 'blue' }}
+>
+  <Text style={{ color: 'white' }}>Ajouter le bateau</Text>
+</TouchableOpacity>
+          <Text style={styles.title}>Transfert d'or entre bateaux</Text>
+          <TextInput
+            placeholder="Montant à transférer"
+            value={nombreOr}
+            onChangeText={setNombreOr}
+            keyboardType="numeric"
+            style={styles.input}
+            testID="nombreOrInput"
+          />
+          <Button title="Transférer" onPress={handleTransfer} testID="buttonTransfererOr" />
+            {isTransfert && (<Text testID="transfertMessage">Transfert réussie de {nombreTresor}</Text>) }
+        </>
+      )}
       <Button title="Se déconnecter" onPress={handleLogout} />
     </ScrollView>
   );
