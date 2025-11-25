@@ -5,6 +5,7 @@ import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import LoginScreen from "./components/LoginScreen";
 import Accueil from "./components/Accueil";
 import { Boat } from "./types/UserType.types";
+import UpdateBoat from "./components/UpdateBoat";
 
 
 export type RootStackParamList = {
@@ -13,6 +14,9 @@ export type RootStackParamList = {
     userName: string;
     password: string;
     boatList: Boat[];
+  };
+    UpdateBoat: {
+    boatid: string;
   };
 
 };
@@ -32,6 +36,11 @@ export default function App() {
           name="AccueilHome"
           component={Accueil}
           options={{ title: "Accueil" }}
+        />
+                 <Stack.Screen
+          name="UpdateBoat"
+          component={UpdateBoat}
+          options={{ title: "Modifier" }}
         />
       </Stack.Navigator>
     </NavigationContainer>

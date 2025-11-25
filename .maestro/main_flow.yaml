@@ -1,4 +1,5 @@
 appId: host.exp.exponent
 ---
 - runFlow: ./flows/login_flow.yaml
+- runFlow: ./flows/accueilPirateNormale_flow.yaml 
 #- runFlow: ./flows/accueilPirateNormale_flow.yaml 
