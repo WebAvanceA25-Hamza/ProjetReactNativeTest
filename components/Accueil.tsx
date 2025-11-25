@@ -76,6 +76,94 @@ const handleDeleteSelected = async () => {
     console.error("Erreur lors de la suppression des bateaux sélectionnés :", error);
   }
 };
+ const handleNavigate = () => {
+    try {
+      for (const Boat of selectedBoats) {
+        navigateBoat(Boat.id);
+      }
+    } catch (error) {
+      console.error("Erreur lors de la navigation des bateaux :", error);
+    }
+  };
+  const navigateBoat = async (idBoat: string) => {
+  console.log("Navigation du bateau avec l'ID :", idBoat);
+  console.log("je susi entree dans navigate boat");
+    if (!idBoat) {
+      alert("Veuillez remplir tous les champs !");
+      return;
+    }
+    try {
+      const token = await getToken();
+        console.log("voici mon token ",token);
+           console.log("arrive a mon ships/send");
+  await POST(`/ships/send/${encodeURIComponent(destination)}`, 
+  { id: idBoat },  // corps
+  { Authorization: `Bearer ${token}` } // headers
+);
+
+      alert(`Bateau ${idBoat} envoyé vers ${destination} !`);
+         navigation.goBack(); 
+    } catch (error) {
+      console.error("Erreur lors de l'envoi du bateau :", error);
+      alert("Échec de l'envoi du bateau. Vérifiez la console pour plus d'infos.");
+         navigation.goBack(); 
+    }
+  };
+  const handleAddequipage = async () => {
+  const token = await getToken();
+  const crewToAdd = Number(nombreEquipage); // convertir en nombre si c'est une string
+
+  await POST(
+    `/ships/ajouterEquipage/${selectedBoats[0].id}`,
+    { newCrew: crewToAdd }, // <-- body correct
+    { Authorization: `Bearer ${token}` }
+  );
+};
+
+const handleDeleteEquipage = async () => {
+  const token = await getToken();
+
+  const crewToRemove = Number(nombreEquipage); // convertir si c'est une string
+
+  console.log("ID du bateau:", selectedBoats[0].id);
+  console.log("Nombre d'équipage à retirer:", crewToRemove);
+/*important de citer newcrew comem dans swagger Non, tu ne peux pas envoyer juste un nombre 
+tout seul dans le body si ton backend attend un objet avec une clé spécifique. ⚠️*/
+  await POST(
+    `/ships/retirerEquipage/${selectedBoats[0].id}`,
+    { newCrew: crewToRemove }, // <-- body correct
+    { Authorization: `Bearer ${token}` } // <-- headers
+  );
+};
+
+  
+  const handleAddTresor = async () => {
+  const token = await getToken();
+  const quantiteOr = Number(nombreOr); // convertir si nécessaire
+
+  console.log("ID du bateau:", selectedBoats[0].id);
+  console.log("Quantité d'or à ajouter:", quantiteOr);
+
+  await POST(
+    `/ships/ajouterOr/${selectedBoats[0].id}`,
+    { Or: quantiteOr }, // <-- body JSON correct
+    { Authorization: `Bearer ${token}` } // <-- headers
+  );
+};
+
+ const handleDeleteTresor = async () => {
+  const token = await getToken();
+  const quantiteOr = Number(nombreOr); // convertir si c'est une string
+
+  console.log("ID du bateau:", selectedBoats[0].id);
+  console.log("Quantité d'or à retirer:", quantiteOr);
+
+  await POST(
+    `/ships/retirerOr/${selectedBoats[0].id}`,
+    { Or: quantiteOr }, // <-- body JSON correct
+    { Authorization: `Bearer ${token}` } // <-- headers
+  );
+};
   const getPorts = async () => {
     try {
       const token = await getToken();
@@ -87,16 +175,7 @@ const handleDeleteSelected = async () => {
       console.error("Erreur lors de la récupération des ports :", error);
     }
   };
-const handleAddequipage = async () => {
-  const token = await getToken();
-  const crewToAdd = Number(nombreEquipage); // convertir en nombre si c'est une string
 
-  await POST(
-    `/ships/ajouterEquipage/${selectedBoats[0].id}`,
-    { newCrew: crewToAdd }, // <-- body correct
-    { Authorization: `Bearer ${token}` }
-  );
-};
   const handleDelete = async (id: string) => {
     try {
       const token = await getToken();
@@ -166,6 +245,48 @@ const toggleSelectBoat = (id: string) => {
           testID="buttonSupprimerSelection"
         />
       )}
+       {!isAdmin && selectedBoats.length > 0 && (
+        <>
+        <Text>Voici la liste des ports dispoinbles des utilisateurs </Text>
+        {ports.map((port) => (
+          <Text key={port}>{port}</Text>
+        ))}
+          <Text>Pour naviguer vers une destination, sélectionnez un bateau et appuyez sur "Naviguer"</Text>
+          <TextInput
+            placeholder="Port"
+            value={destination}
+            onChangeText={setDestination}
+            style={styles.input}
+            testID="portInput"
+          />
+          <Button title="Naviguer" onPress={handleNavigate} testID="buttonNaviguer" />
+
+          <Text testID="equipageTitle">Ajouter ou retirer un membre de l'équipage</Text>
+          <TextInput
+            placeholder="Nombre d'équipage"
+            value={nombreEquipage}
+            onChangeText={setNombreEquipage}
+            style={styles.input}
+            keyboardType="numeric"
+            testID="nombreEquipageInput"
+          />
+          <Button title="+" onPress={handleAddequipage} testID="buttonAddEquipage"  />
+          <Button title="-" onPress={handleDeleteEquipage}  testID="buttonDeleteEquipage"/>
+
+          <Text>Ajouter ou retirer de l'or</Text>
+          <TextInput
+            placeholder="Nombre d'or"
+            value={nombreOr}
+            onChangeText={setNombreOr}
+            style={styles.input}
+            keyboardType="numeric"
+            testID="nombreOrInput"
+          />
+          <Button title="+" onPress={handleAddTresor} testID="buttonAddOr" />
+          <Button title="-" onPress={handleDeleteTresor}  testID="buttonDeleteOr" />
+        </>
+      )}
+
       <Button title="Se déconnecter" onPress={handleLogout} />
     </ScrollView>
   );
