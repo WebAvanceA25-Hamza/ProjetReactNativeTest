@@ -1,0 +1,60 @@
+1️⃣ Le rôle de Maestro
+
+Maestro est un framework de tests UI mobile.
+
+Il ne lance pas ton application par lui-même, mais il interagit avec ton application via des commandes pour simuler un utilisateur : cliquer, taper du texte, faire défiler, etc.
+
+Il est utilisé surtout pour les tests end-to-end, c’est-à-dire tester l’appli entière du point de vue de l’utilisateur.
+
+2️⃣ Le fichier YAML
+
+Oui, le fichier YAML (ex: main_flow.yaml) décrit le “flow” de test.
+
+Il contient la séquence d’actions que Maestro doit faire :
+
+Trouver un champ texte → saisir un email
+
+Cliquer sur un bouton → passer à l’écran suivant
+
+Vérifier qu’un texte est affiché → valider l’étape
+
+Chaque action est définie dans le YAML sous forme de “commandes” lisibles par Maestro.
+
+3️⃣ Le .bat (ou maestro.bat)
+
+Le .bat est juste un script pour Windows qui lance Maestro avec les bons paramètres.
+
+Quand tu exécutes :
+
+& "C:\chemin\maestro.bat" test .maestro/main_flow.yaml --format junit --output result.xml
+
+
+Cela fait :
+
+Maestro démarre en utilisant Java.
+
+Il lit ton YAML et interprète chaque étape.
+
+Il exécute les actions sur l’appareil ou émulateur connecté.
+
+Il génère un rapport de test (result.xml) à la fin.
+
+4️⃣ Est-ce un service ?
+
+Non, Maestro n’est pas un service qui tourne en arrière-plan.
+
+Chaque fois que tu lances le .bat, il démarre, exécute le flow, puis s’arrête.
+
+Donc il faut le relancer pour chaque série de tests ou à chaque fois que tu veux exécuter un flow.
+
+5️⃣ Points importants
+
+Ton application doit être ouverte sur l’émulateur ou appareil quand tu lances le test.
+
+Les éléments de l’UI doivent correspondre à ceux décrits dans le YAML.
+
+Maestro dépend de Java et doit avoir la bonne version pour tourner.
+
+
+
+!!!!!totujours lancer l'app avant de tester 

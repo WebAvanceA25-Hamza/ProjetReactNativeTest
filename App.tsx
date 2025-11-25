@@ -1,131 +1,55 @@
-/*
-import React, { useState } from "react";
-import { View, Text, TextInput, Button, StyleSheet } from "react-native";
+// App.tsx
+import * as React from "react";
+import { NavigationContainer } from "@react-navigation/native";
+import { createNativeStackNavigator } from "@react-navigation/native-stack";
+import LoginScreen from "./components/LoginScreen";
+import Accueil from "./components/Accueil";
+import { Boat } from "./types/UserType.types";
+import UpdateBoat from "./components/UpdateBoat";
+import navigations from "./components/navigations";
+
+export type RootStackParamList = {
+  Login: undefined;
+  AccueilHome: {
+    userName: string;
+    password: string;
+    boatList: Boat[];
+  };
+  UpdateBoat: {
+    boatid: string;
+  };
+  Autresnavigations: {
+    idBoat: string;
+  }
+};
+
+const Stack = createNativeStackNavigator<RootStackParamList>();
 
 export default function App() {
-  const [email, setEmail] = useState("");
-  const [submitted, setSubmitted] = useState(false);
-
-  const handleLogin = () => {
-    setSubmitted(true);
-  };
-
   return (
-    <View style={styles.container}>
-      {!submitted ? (
-        <>
-          <Text style={styles.title}>Connexion</Text>
-          <TextInput
-            placeholder="Email"
-            value={email}
-            onChangeText={setEmail}
-            accessibilityLabel="emailInput"   // 👈 Maestro s'en sert
-            style={styles.input}
-          />
-          <Button
-            title="Se connecter"
-            accessibilityLabel="submitButton" // 👈 Maestro s'en sert
-            onPress={handleLogin}
-          />
-        </>
-      ) : (
-        <Text accessibilityLabel="welcomeText">
-          Bienvenue {email}
-        </Text>
-      )}
-    </View>
+    <NavigationContainer>
+      <Stack.Navigator initialRouteName="Login">
+        <Stack.Screen
+          name="Login"
+          component={LoginScreen}
+          options={{ title: "Connexion" }}
+        />
+        <Stack.Screen
+          name="AccueilHome"
+          component={Accueil}
+          options={{ title: "Accueil" }}
+        />
+         <Stack.Screen
+          name="UpdateBoat"
+          component={UpdateBoat}
+          options={{ title: "Modifier" }}
+        />
+         <Stack.Screen
+          name="Autresnavigations"
+          component={navigations}
+          options={{ title: "pagesnavigations" }}
+        />
+      </Stack.Navigator>
+    </NavigationContainer>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-    padding: 20,
-  },
-  title: {
-    fontSize: 24,
-    marginBottom: 20,
-  },
-  input: {
-    width: "80%",
-    borderWidth: 1,
-    borderColor: "#ccc",
-    borderRadius: 5,
-    padding: 10,
-    marginBottom: 20,
-  },
-});
-*/
-import React, { useState } from "react";
-import { View, Text, TextInput, Button, StyleSheet } from "react-native";
-
-export default function App() {
-  const [email, setEmail] = useState("");
-  const [submitted, setSubmitted] = useState(false);
-
-  const handleLogin = () => {
-    setSubmitted(true);
-  };
-
-  const handleLogout = () => {
-    setSubmitted(false);
-    setEmail(""); // Optionnel : réinitialiser l'email
-  };
-
-  return (
-    <View style={styles.container}>
-      {!submitted ? (
-        <>
-          <Text style={styles.title}>Connexion</Text>
-          <TextInput
-            placeholder="Email"
-            value={email}
-            onChangeText={setEmail}
-            accessibilityLabel="emailInput"
-            style={styles.input}
-          />
-          <Button
-            title="Se connecter"
-            accessibilityLabel="submitButton"
-            onPress={handleLogin}
-          />
-        </>
-      ) : (
-        <>
-          <Text accessibilityLabel="welcomeText">
-            Bienvenue {email}
-          </Text>
-          <Button
-            title="Déconnexion"
-            accessibilityLabel="logoutButton" // 👈 utile pour Maestro
-            onPress={handleLogout}
-          />
-        </>
-      )}
-    </View>
-  );
-}
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-    padding: 20,
-  },
-  title: {
-    fontSize: 24,
-    marginBottom: 20,
-  },
-  input: {
-    width: "80%",
-    borderWidth: 1,
-    borderColor: "#ccc",
-    borderRadius: 5,
-    padding: 10,
-    marginBottom: 20,
-  },
-});
-

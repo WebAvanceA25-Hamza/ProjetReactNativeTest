@@ -1,0 +1,107 @@
+appId: host.exp.exponent
+---
+
+# ⚠️ Assure-toi que ton app Expo est déjà ouverte dans l’émulateur avant d’exécuter ce test. 
+# Avec Maestro, les assertions (assertVisible, assertNotVisible) ne sont pas limitées à une section précise de ta page. 
+# Elles vérifient dans tout l’écran rendu si le texte ou l’élément est présent ou non.
+# donc techniquement on n’a pas à vérifier si les bateaux sont présents dans une section précise, 
+# on vérifie simplement qu’ils apparaissent ou disparaissent dans l’UI globale.
+# Sélection d’un bateau avant d’agir
+# Sélection de deux bateaux
+- tapOn:
+    id: "checkbox-boat-name-hamzaShip"
+- tapOn:
+    id: "checkbox-boat-name-hamzaShip"
+
+# === Ajout d’un nouveau bateau ===
+
+- tapOn:
+    id: "NomduBateauAjoutInput"
+- eraseText
+- inputText: "yanyShip2"
+
+- tapOn: 
+    id: "CapitaineAjoutInput"
+- eraseText
+- inputText: "yanyCapitaine"
+
+- tapOn: 
+    id: "OrDansLaCargaisonInputAjout"
+- eraseText
+- inputText: "5000"
+
+- tapOn: 
+    id: "TailleDeLEquipageInputAjout"
+- eraseText
+- inputText: "50"
+
+# Sélection du statut sailing
+- tapOn: 
+    id: "StatusInput"
+- tapOn: 
+    id: "SailingStatusOption"
+
+- tapOn:
+    id: "buttonAjouterBateau"
+- assertVisible: "yanyShip2"
+
+
+# Modifier le bateau hamzaShip
+- tapOn:
+    id: "buttonModifier-boat-name-hamzaShip"
+- assertVisible: "Formulaire Bateau"
+
+# === Modification du bateau ===
+
+- tapOn:
+    id: "NomduBateauInput"
+- eraseText
+- inputText: "yanyShip3"
+
+- tapOn: 
+     id: "CapitaineInput"
+- eraseText
+- inputText: "yanyCapitaine"
+
+- tapOn: 
+     id: "OrDansLaCargaisonInput"
+- eraseText
+- inputText: "5000"
+
+- tapOn:
+     id:  "TailleDeLEquipageInput"
+- eraseText
+- inputText: "50"
+
+# Valider modification
+- tapOn: 
+    id:  "buttonModifierBateau"
+- pressKey: back
+- assertVisible: "yanyShip3"
+
+
+# === Suppression bateau ===
+- tapOn:
+    id: "buttonSupprimer-boat-name-hamzaShip"
+- assertNotVisible: "boat-name-hamzaShip"
+
+# Suppression sélection multiple
+- tapOn:
+    id: "buttonSupprimerSelection"
+- assertVisible: "Aucun bateau"
+
+
+
+# === Transfert d'or ===
+
+# Sélectionner deux bateaux réapparus
+#- tapOn: "checkbox-boat-name-hamzaShip"
+#- tapOn: "checkbox-boat-name-hamzaShip-2"
+
+# Transfert
+#- tapOn: "nombreOrInput"
+#- eraseText
+#- inputText: "2000"
+
+#- tapOn: "buttonTransfererOr"
+#- assertVisible: "Transfert réussie de 2000"

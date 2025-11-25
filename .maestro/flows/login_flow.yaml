@@ -1,8 +1,25 @@
+
 appId: host.exp.exponent
 ---
-#- launchApp
-# ⚠️ Assure-toi que ton app Expo est déjà ouverte dans l’émulateur avant d’exécuter ce test.
-- tapOn: "emailInput"
+
+- tapOn:
+    id: nomInput
+- inputText: "hamzaMahjoubi"
+
+- tapOn:
+    id: emailInput
 - inputText: "alain@example.com"
-- tapOn: "submitButton"
-- assertVisible: "Bienvenue alain@example.com"
+
+- tapOn:
+    id: passwordInput
+- inputText: "Password123"
+
+- pressKey: back
+- tapOn:
+    id: submitButton
+
+# Vérifier la navigation ou un texte visible
+
+- assertVisible:
+    id: accueilHomeTitle
+

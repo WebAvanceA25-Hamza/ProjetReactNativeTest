@@ -1,0 +1,166 @@
+// screens/LoginScreen.tsx
+import React, { useState } from "react";
+import {
+  View,
+  TextInput,
+  Button,
+  Alert,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+} from "react-native";
+import { NativeStackNavigationProp } from "@react-navigation/native-stack";
+import { useNavigation } from "@react-navigation/native";
+import useFetch from "./hooks/useFetch";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import user from "./types/UserType.types";
+
+type RootStackParamList = {
+  Login: undefined;
+  AccueilHome: { userName: string };
+};
+
+type LoginScreenNavigationProp = NativeStackNavigationProp<
+  RootStackParamList,
+  "Login"
+>;
+
+export default function LoginScreen() {
+  const navigation = useNavigation<LoginScreenNavigationProp>();
+
+  const [nom, setNom] = useState("");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+
+  const { POST } = useFetch();
+
+  const handleLogin = async () => {
+    console.log("🔐 Bouton Connexion cliqué"); // debug
+
+    if (!nom || !email || !password) {
+      Alert.alert("Erreur", "Veuillez remplir tous les champs !");
+      return;
+    }
+
+    const newUser: user = {
+      username: nom,
+      password: password,
+    };
+
+    try {
+      console.log("🔐 Tentative de connexion pour :", nom);
+      const response = await POST<user>("/auth", newUser);
+      console.log("✅ Réponse du serveur :", response);
+
+      Alert.alert("Succès", "Connexion réussie !");
+      navigation.navigate("AccueilHome", { userName: nom });
+    } catch (error) {
+      console.error("❌ Erreur connexion :", error);
+      Alert.alert("Erreur", "Impossible de se connecter");
+    }
+  };
+
+  return (
+    <View style={styles.container}>
+      <TextInput
+        placeholder="Nom"
+        style={styles.input}
+        value={nom}
+        onChangeText={setNom}
+      />
+      <TextInput
+        placeholder="Email"
+        style={styles.input}
+        value={email}
+        onChangeText={setEmail}
+      />
+      <TextInput
+        placeholder="Mot de passe"
+        style={styles.input}
+        value={password}
+        onChangeText={setPassword}
+        secureTextEntry
+      />
+
+      <Button title="Connexion" onPress={handleLogin} />
+
+      <TouchableOpacity
+        onPress={() => navigation.navigate("AccueilHome", { userName: nom })}
+      >
+        <Text style={styles.link}>Aller à la page d'accueil</Text>
+      </TouchableOpacity>
+    </View>
+  );
+}
+
+const styles = StyleSheet.create({
+  container: { flex: 1, justifyContent: "center", padding: 20 },
+  input: {
+    borderWidth: 1,
+    borderColor: "#ccc",
+    borderRadius: 8,
+    padding: 10,
+    marginBottom: 12,
+  },
+  link: {
+    color: "blue",
+    marginTop: 20,
+    textAlign: "center",
+  },
+});
+
+
+/*
+
+const handleLogin = async () => {
+  if (!nom || !email || !password) {
+    Alert.alert("Erreur", "Veuillez remplir tous les champs !");
+    return;
+  }
+
+  const newUser: user = {
+    username: nom,
+    password: password,
+  };
+
+  try {
+    console.log("🔐 Tentative de connexion pour :", nom);
+
+    const data = await POST<{ token?: string; error?: string }>("/auth", newUser);
+
+    // ✅ Vérification sécurisée sans response.ok
+    if (!data || !data.token) {
+      const message = data?.error || "Identifiants invalides ou token manquant";
+      Alert.alert("Erreur", message);
+      return;
+    }
+
+    await AsyncStorage.setItem("userToken", data.token);
+    console.log("✅ Token stocké :", data.token);
+
+    // 🔍 Utiliser la fonction utilitaire pour décoder
+    const payload: TokenPayload | null = await getDecodedToken();
+    console.log("🔓 Décodage du token effectué.");
+    console.log("Payload reçu :", payload);
+
+    if (payload) {
+      console.log("📦 Payload du token :", payload);
+
+      if (payload.isAdmin === true) {
+        console.log("👑 L'utilisateur est un administrateur.");
+      } else {
+        console.log("🙅‍♂️ L'utilisateur n'est pas un administrateur.");
+      }
+    }
+
+    // 🚀 Navigation vers l'accueil
+    console.log("➡️ Navigation vers AccueilHome avec nom :", nom);
+    navigation.navigate("AccueilHome", { userName: nom });
+
+    Alert.alert("Succès", "Connexion réussie !");
+  } catch (error) {
+    console.error("❌ Erreur :", error);
+    Alert.alert("Erreur", "Impossible de se connecter");
+  }
+};
+*/

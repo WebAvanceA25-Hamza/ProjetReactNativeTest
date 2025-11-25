@@ -1,4 +1,4 @@
-Stop-Process -Id (Get-NetTCPConnection -LocalPort 8081).OwningProcess -Force
+Stop-Process -Id (Get-NetTCPConnection -LocalPort 8090).OwningProcess -Force
 
 # 1. Démarrer le serveur Metro via cmd
 #cmd /c "npx expo start --android"

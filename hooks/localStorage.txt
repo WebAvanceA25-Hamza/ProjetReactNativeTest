@@ -1,0 +1,50 @@
+import React from "react";
+/**
+ * Hook utilitaire pour gérer facilement le stockage local (localStorage) dans le navigateur.
+ * Compatible TypeScript et React.
+ *
+ * @param key - Clé unique utilisée dans le localStorage.
+ * @returns { getItem, setItem, removeItem } - Méthodes de manipulation du stockage.
+ */
+const useLocalStorage = <T,>(key: string) => {
+  /**
+   * Récupère un élément depuis le localStorage.
+   * Retourne null si l’élément n’existe pas ou en cas d’erreur.
+   */
+  const getItem = (): T | null => {
+    try {
+      const item = localStorage.getItem(key);
+      return item ? (JSON.parse(item) as T) : null;
+    } catch (error) {
+      console.error("❌ Erreur lors de la lecture de localStorage :", error);
+      return null;
+    }
+  };
+
+  /**
+   * Enregistre une valeur dans le localStorage sous forme JSON.
+   */
+  const setItem = (value: T): void => {
+    try {
+      const jsonValue = JSON.stringify(value);
+      localStorage.setItem(key, jsonValue);
+    } catch (error) {
+      console.error("❌ Erreur lors de l’écriture dans localStorage :", error);
+    }
+  };
+
+  /**
+   * Supprime une clé spécifique du localStorage.
+   */
+  const removeItem = (): void => {
+    try {
+      localStorage.removeItem(key);
+    } catch (error) {
+      console.error("❌ Erreur lors de la suppression dans localStorage :", error);
+    }
+  };
+
+  return { getItem, setItem, removeItem };
+};
+
+export default useLocalStorage;
