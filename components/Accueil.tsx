@@ -271,7 +271,7 @@ const handleTransfer = async () => {
     console.log("Token:", token);
 
     const response = await POST(
-      `/transferGold/${fromBoat.id}/${toBoat.id}`,
+      `/ships/transferGold/${fromBoat.id}/${toBoat.id}`,
       { amount }, // body
       { authorization: `Bearer ${token}` } // headers en minuscules
     );
