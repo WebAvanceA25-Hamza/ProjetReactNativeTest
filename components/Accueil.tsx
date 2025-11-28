@@ -69,33 +69,47 @@ if (token) {
     if (isFocused) fetchBoats();
     getPorts();
   }, [isFocused, stateAddOrDeleteBoat]);
+
   useEffect(() => { 
     setSelectedBoats(boatList);
 getPorts();
   }, []);
 
-  const handleSubmit = async () => {
-    if (!name || !goldCargo || !captain || !crewSize) {
-      Alert.alert("Erreur", "Veuillez remplir tous les champs du formulaire !");
-      return;
-    }
+const handleSubmit = async () => {
+  if (!name || !goldCargo || !captain || !crewSize) {
+    Alert.alert("Erreur", "Veuillez remplir tous les champs du formulaire !");
+    return;
+  }
 
-    try {
-      const token = await getToken();
-      const newBoat: BoatRequest = {
-        name,
-        goldCargo: parseInt(goldCargo, 10),
-        captain,
-        status,
-        crewSize: parseInt(crewSize, 10),
-      };
-      await POST<BoatRequest>("/ships", newBoat, { Authorization: `Bearer ${token}` });
-      Alert.alert("Succès", "Bateau ajouté avec succès !");
-      setStateAddOrDeleteBoat(!stateAddOrDeleteBoat);
-    } catch (error) {
-      console.error("Erreur lors de l'ajout du bateau :", error);
-    }
-  };
+  try {
+    const token = await getToken();
+    const newBoat: BoatRequest = {
+      name,
+      goldCargo: parseInt(goldCargo, 10),
+      captain,
+      status,
+      crewSize: parseInt(crewSize, 10),
+    };
+
+    await POST<BoatRequest>("/ships", newBoat, { Authorization: `Bearer ${token}` });
+
+    Alert.alert("Succès", "Bateau ajouté avec succès !");
+
+    // Réinitialiser les champs
+    setName("");
+    setGoldCargo("");
+    setCaptain("");
+    setCrewSize("");
+    setStatus("docked");
+
+    // ⚡ déclenche le useEffect pour re-fetch
+    setStateAddOrDeleteBoat(prev => !prev);
+
+  } catch (error) {
+    console.error("Erreur lors de l'ajout du bateau :", error);
+  }
+};
+
 const toggleSelectBoat = (id: string) => {
   setSelectedBoats((prevSelectedBoats) => {
     const isSelected = prevSelectedBoats.some((boat) => boat.id === id);
@@ -236,8 +250,45 @@ const handleDeleteSelected = async () => {
     console.error("Erreur lors de la suppression des bateaux sélectionnés :", error);
   }
 };
+const handleTransfer = async () => {
+  if (!nombreOr || selectedBoats.length < 2) {
+    Alert.alert("Erreur", "Veuillez remplir tous les champs !");
+    console.log("Erreur : montant ou sélection de bateaux invalide");
+    return;
+  }
+
+  const fromBoat = selectedBoats[0];
+  const toBoat = selectedBoats[1];
+  const amount = parseInt(nombreOr, 10);
+
+  console.log("=== TRANSFER INIT ===");
+  console.log("From Boat:", fromBoat);
+  console.log("To Boat:", toBoat);
+  console.log("Amount:", amount);
+
+  try {
+    const token = await getToken();
+    console.log("Token:", token);
+
+    const response = await POST(
+      `/transferGold/${fromBoat.id}/${toBoat.id}`,
+      { amount }, // body
+      { authorization: `Bearer ${token}` } // headers en minuscules
+    );
+
+    console.log("Response POST:", response);
+
+    Alert.alert("Succès", `Transfert de ${amount} or effectué !`);
+    setIsTransfert(prev => !prev);
+
+  } catch (error) {
+    console.error("Erreur lors du transfert :", error);
+    Alert.alert("Erreur", "Le transfert a échoué.");
+  }
+};
 
 
+/*
   const handleTransfer = async () => {
     if (!nombreOr || selectedBoats.length < 2) {
       Alert.alert("Erreur", "Veuillez remplir tous les champs !");
@@ -256,7 +307,7 @@ const handleDeleteSelected = async () => {
       console.error("Erreur lors du transfert :", error);
     }
   };
-
+*/
   const handleLogout = async () => {
     try {
       const response = await POST<user, { token: string }>("/logout", { username: userName, password });
@@ -282,11 +333,12 @@ const handleDeleteSelected = async () => {
         <View key={boat.id} style={styles.boatContainer}>
           <View style={styles.boatHeader}>
             <Text style={styles.subtext} testID={`boat-name-${boat.id}`}>{boat.name}</Text>
-            <Checkbox
-              status={selectedBoats.includes(boat) ? "checked" : "unchecked"}
-              onPress={() => toggleSelectBoat(boat.id)}
-               testID={`checkbox-${boat.name}`}
-            />
+           <Checkbox
+            status={selectedBoats.some((b) => b.id === boat.id) ? "checked" : "unchecked"}
+            onPress={() => toggleSelectBoat(boat.id)}
+            testID={`checkbox-${boat.name}`}
+          />
+
           </View>
           <Text style={styles.subtext}>Statut: {boat.status}</Text>
           <Text style={styles.subtext}>Capitaine: {boat.captain}</Text>

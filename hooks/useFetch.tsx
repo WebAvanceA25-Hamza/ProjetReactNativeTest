@@ -1,6 +1,6 @@
 
 //Solution: soit utilsier nkgrok , soit le mettre sur un VPS accessible , soit ouvirer l'api pour qu'elle écoute sur tous les port -é-é-é-
-const BASE_URL = 'http://10.0.2.2:4000/api';
+const BASE_URL = 'https://hamza.alain.lab.edwrdl.ca/api';
 const useFetch = () => {
   // Déclaration de handleResponse, visible dans tout useFetch
   async function handleResponse<T>(response: Response): Promise<T | undefined> {
@@ -44,7 +44,7 @@ const useFetch = () => {
   }
 
   // POST avec headers optionnels
-  async function POST<T, R = T>(url: string, body: T, headers?: Record<string, string>): Promise<R | undefined> {
+  /*async function POST<T, R = T>(url: string, body: T, headers?: Record<string, string>): Promise<R | undefined> {
     try {
       const response = await fetch(`${BASE_URL}${url}`, {
         method: 'POST',
@@ -56,7 +56,27 @@ const useFetch = () => {
       console.error('Erreur POST:', error);
       throw error;
     }
+  }*/
+ async function POST<T, R = T>(url: string, body: T, headers?: Record<string, string>): Promise<R | undefined> {
+  try {
+    const response = await fetch(`${BASE_URL}${url}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', ...headers },
+      body: JSON.stringify(body),
+    });
+
+    console.log("Raw fetch response:", response);
+
+    // parse JSON si possible
+    const data = await response.json().catch(() => undefined);
+    console.log("Parsed response JSON:", data);
+    return data as R;
+  } catch (error) {
+    console.error('Erreur POST:', error);
+    throw error;
   }
+}
+
 
   // PUT avec headers optionnels
   async function PUT<T, R = T>(url: string, body: T, headers?: Record<string, string>): Promise<R | undefined> {
