@@ -1,4 +1,3 @@
-import React, { useState } from "react";
 import { RouteProp } from "@react-navigation/native";
 import { Boat, BoatRequest, BoatRequestUpdate } from "../types/UserType.types";
 import { Picker } from '@react-native-picker/picker';
@@ -6,6 +5,7 @@ import { Alert, Button, ScrollView, StyleSheet, Text, TextInput } from 'react-na
 import useFetch from "../hooks/useFetch";
 import { NativeStackScreenProps } from "@react-navigation/native-stack";
 import useLocalStorage from "../hooks/AsyncStorage";
+import { useState } from "react";
 
 type RootStackParamList = {
   Login: undefined;
@@ -40,20 +40,34 @@ const tokenRecuperation = async (): Promise<string | null> => {
       return;
     }
 
+    const goldCargoNum = parseInt(goldCargo, 10);
+    const crewSizeNum = parseInt(crewSize, 10);
+
+    if (isNaN(goldCargoNum) || isNaN(crewSizeNum)) {
+      Alert.alert("Erreur", "Veuillez entrer des nombres valides pour l'or et l'équipage.");
+      return;
+    }
+
     const boatData: BoatRequestUpdate = {
-      name,
-      captain,
-      goldCargo: parseInt(goldCargo, 10),
-      crewSize: parseInt(crewSize, 10),
+      name: name.trim(),
+      captain: captain.trim(),
+      goldCargo: goldCargoNum,
+      crewSize: crewSizeNum,
     };
 
+    console.log("📤 Payload à envoyer:", JSON.stringify(boatData));
+
     try {
-          const token = await tokenRecuperation(); // récupère le token
+      const token = await tokenRecuperation(); // récupère le token
+      if (!token) {
+        Alert.alert("Erreur", "Token manquant.");
+        return;
+      }
       await PATCH<BoatRequestUpdate>(`/ships/${boatid}`, boatData, {
-          Authorization: `Bearer ${token}`,
-      } );
+        Authorization: `Bearer ${token}`,
+      });
       Alert.alert("Succès", "Bateau mis à jour !");
-   navigation.goBack(); 
+      navigation.goBack(); 
    /*!!Problèem que ca cause : Quand tu fais un navigation.goBack() (ou que tu retournes à un écran déjà monté),
  le composant n’est pas recréé, il est juste rendu à nouveau.
  Conséquence : les useEffect qui dépendent de [] (montage initial) ne se déclenchent pas, 

@@ -12,6 +12,7 @@ export type Boat = {
   crewSize: number;
   createdBy : string;
   lastModified : Date;
+  timesPillaged:number;
 };
 export type BoatRequest = {
   name: string;

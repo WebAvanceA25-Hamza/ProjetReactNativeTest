@@ -33,7 +33,6 @@ export default function LoginScreen() {
   const tokenStorage = useLocalStorage<string>("authToken");
   const { POST, GET } = useFetch();
   const [nom, setNom] = useState("");
-  const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [boatListe, setBoatList] = useState<Boat[]>([]);
   // 🔹 Fonction pour récupérer le token stocké
@@ -66,7 +65,7 @@ export default function LoginScreen() {
   // 🔐 Fonction de connexion
   const handleLogin = async () => {
     console.log("🔐 Tentative de connexion...");
-    if (!nom || !email || !password) {
+    if (!nom ||  !password) {
       Alert.alert("Erreur", "Veuillez remplir tous les champs !");
       return;
     }
@@ -102,12 +101,9 @@ export default function LoginScreen() {
       } else {
         console.log("🙅‍♂️ L'utilisateur n'est pas un administrateur.");
       }
-      console.log(`📧 Email de l'utilisateur : ${decoded.email}`);
       console.log(
         `⏰ Expiration du token : ${new Date((decoded.exp ?? 0) * 1000)}`
       );
-      // ✅ Message de succès
-      Alert.alert("Succès", `Bienvenue ${decoded.email || nom} !`);
       // 🚀 Navigation vers l'accueil
       navigation.navigate("AccueilHome", {
         userName: nom,
@@ -129,13 +125,7 @@ export default function LoginScreen() {
         testID="nomInput"
         onChangeText={setNom}
       />
-      <TextInput
-        placeholder="Email"
-        style={styles.input}
-        value={email}
-        testID="emailInput"
-        onChangeText={setEmail}
-      />
+
       <TextInput
         placeholder="Mot de passe"
         style={styles.input}

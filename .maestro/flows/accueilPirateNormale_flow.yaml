@@ -8,38 +8,16 @@
 
 appId: host.exp.exponent
 ---
-#c<Est vraiment partie pirate admin
-# Sélection d’un bateau avant d’agir
+
 - tapOn:
     id: "checkbox-boat-name-hamzaShip"
 
-# Sélection d’un bateau pour modifier
-
-#- tapOn:
- #   id: buttonModifier-boat-name-hamzaShip
-#- assertVisible: "Formulaire Bateau"
-#- pressKey: back
-
-# Supprimer 1 bateau
-#- tapOn:
- #   id: buttonSupprimer-boat-name-hamzaShip
-#- assertNotVisible: "boat-name-hamzaShip"
-
-# Revenir
-#- pressKey: back
-
-#- tapOn:
- #   id: buttonSupprimerSelection
-#- assertVisible: "Aucun bateau"
-
-# Gestion équipage
 - tapOn:
     id: nombreEquipageInput
 - inputText: "15"
 - tapOn:
     id: buttonAddEquipage
 
-# Maintenant on efface puis on remet un nouveau nombre
 - tapOn:
     id: nombreEquipageInput
 - eraseText
@@ -47,15 +25,12 @@ appId: host.exp.exponent
 - tapOn:
     id: buttonDeleteEquipage
 
-
-# Gestion or
 - tapOn:
     id: nombreOrInput
 - inputText: "205"
 - tapOn:
     id: buttonAddOr
 
-# Effacer et écrire un nouveau nombre
 - tapOn:
     id: nombreOrInput
 - eraseText
@@ -63,4 +38,4 @@ appId: host.exp.exponent
 - tapOn:
     id: buttonDeleteOr
 
-    # reste celui de navire 
+

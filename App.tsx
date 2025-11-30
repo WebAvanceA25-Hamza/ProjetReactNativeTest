@@ -37,7 +37,7 @@ export default function App() {
           component={Accueil}
           options={{ title: "Accueil" }}
         />
-                 <Stack.Screen
+        <Stack.Screen
           name="UpdateBoat"
           component={UpdateBoat}
           options={{ title: "Modifier" }}
