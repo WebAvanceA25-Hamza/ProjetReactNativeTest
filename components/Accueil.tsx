@@ -289,10 +289,11 @@ if (
     return;
   }
 
-  if (!(destination in ports)) {
-    Alert.alert("Erreur", "Port introuvable !");
-    return;
-  }
+if (!ports.includes(destination)) {
+  Alert.alert("Erreur", "Port introuvable !");
+  return;
+}
+
 
   try {
     const token = await getToken();
@@ -314,7 +315,7 @@ if (
 
   return (
     <ScrollView contentContainerStyle={styles.container}>
-      <Text style={styles.title}>
+      <Text   testID="accueilHomeTitle" style={styles.title} >
         Bienvenue {userName} {isAdmin ? "vous êtes admin" : "vous êtes un pirate normal"}
       </Text>
 

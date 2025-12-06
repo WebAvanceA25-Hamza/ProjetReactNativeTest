@@ -7,10 +7,6 @@ appId: host.exp.exponent
 - inputText: "hamzaMahjoubi"
 
 - tapOn:
-    id: emailInput
-- inputText: "alain@example.com"
-
-- tapOn:
     id: passwordInput
 - inputText: "Password123"
 
@@ -18,7 +14,6 @@ appId: host.exp.exponent
 - tapOn:
     id: submitButton
 
-# Vérifier la navigation ou un texte visible
 
 - assertVisible:
     id: accueilHomeTitle
