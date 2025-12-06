@@ -84,37 +84,62 @@ export default function Accueil({ route }: { route: { params?: RootStackParamLis
     }
   }, [isFocused]);
 
-  const handleSubmit = async (name: string, captain: string, goldCargo: string, crewSize: string, status: Boat["status"]) => {
-    const token = await getToken();
-    if (!token) return;
+const handleSubmit = async (
+  name: string,
+  captain: string,
+  goldCargo: string,
+  crewSize: string,
+  status: Boat["status"]
+) => {
+  const token = await getToken();
+  if (!token) {
+    Alert.alert("Erreur", "Token manquant. Veuillez vous reconnecter.");
+    return;
+  }
 
-    if (isNaN(Number(goldCargo)) || isNaN(Number(crewSize))) {
-      Alert.alert("Erreur", "Veuillez entrer des valeurs numériques valides.");
-      return;
-    }
+  if (!name || !captain || !goldCargo || !crewSize) {
+    Alert.alert("Erreur", "Veuillez remplir tous les champs.");
+    return;
+  }
 
-    const newBoat: BoatRequest = {
-      name,
-      captain,
-      goldCargo: Number(goldCargo),
-      crewSize: Number(crewSize),
-      status,
-    };
+if (
+  isNaN(Number(goldCargo)) ||
+  isNaN(Number(crewSize)) ||
+  Number(goldCargo) < 0 ||
+  Number(crewSize) < 0
+) {
+  Alert.alert("Erreur", "Veuillez entrer des nombres valides et non négatifs.");
+  return;
+}
 
-    try {
-      await POST("/ships", newBoat, { Authorization: `Bearer ${token}` });
-
-      setBoatListe(previousBoats => [
-        ...previousBoats,
-        { ...newBoat, id: Date.now().toString() } as Boat,
-      ]);
-
-      await refetchBoats();
-    } catch (error) {
-      console.error("Erreur lors de l'ajout du bateau :", error);
-      Alert.alert("Erreur d'ajout", "Échec de la création du bateau. Veuillez réessayer.");
-    }
+  const newBoat: BoatRequest = {
+    name,
+    captain,
+    goldCargo: Number(goldCargo),
+    crewSize: Number(crewSize),
+    status,
   };
+
+  try {
+    await POST("/ships", newBoat, { Authorization: `Bearer ${token}` });
+
+    Alert.alert("Succès", "Bateau créé avec succès.");
+
+    setBoatListe((previousBoats) => [
+      ...previousBoats,
+      { ...newBoat, id: Date.now().toString() } as Boat, // OK si ton API ne renvoie pas d'ID
+    ]);
+
+    await refetchBoats();
+  } catch (error) {
+    console.error("Erreur lors de l'ajout du bateau :", error);
+    Alert.alert(
+      "Erreur",
+      "Impossible de créer le bateau pour le moment. Réessayez plus tard."
+    );
+  }
+};
+
 
   const handleUpdate = (id: string) => navigation.navigate("UpdateBoat", { boatid: id });
 
@@ -135,7 +160,6 @@ export default function Accueil({ route }: { route: { params?: RootStackParamLis
 
   const handleDeleteSelected = async () => {
     if (selectedBoats.length === 0) return;
-
     try {
       await Promise.all(selectedBoats.map(selectedBoat => handleDelete(selectedBoat.id)));
       setSelectedBoats([]);
@@ -153,7 +177,6 @@ export default function Accueil({ route }: { route: { params?: RootStackParamLis
   const toggleSelectBoat = (id: string) => {
     setSelectedBoats(previousSelectedBoats => {
       const alreadySelected = previousSelectedBoats.some(selectedBoat => selectedBoat.id === id);
-
       return alreadySelected
         ? previousSelectedBoats.filter(selectedBoat => selectedBoat.id !== id)
         : [...previousSelectedBoats, boatListe.find(boat => boat.id === id)!];
@@ -181,13 +204,11 @@ export default function Accueil({ route }: { route: { params?: RootStackParamLis
   const handleDeleteEquipage = async (crewSize: string) => {
     const token = await getToken();
     if (!token || !selectedBoats[0]) return;
-
     const crewToRemove = Number(crewSize);
     if (crewToRemove <= 0 || isNaN(crewToRemove)) {
       Alert.alert("Erreur", "Veuillez entrer un nombre valide pour l'équipage.");
       return;
     }
-
     try {
       await POST(`/ships/retirerEquipage/${selectedBoats[0].id}`, { newCrew: crewToRemove }, { Authorization: `Bearer ${token}` });
       await refetchBoats();
@@ -199,13 +220,11 @@ export default function Accueil({ route }: { route: { params?: RootStackParamLis
   const handleAddTresor = async (goldCargo: string) => {
     const token = await getToken();
     if (!token || !selectedBoats[0]) return;
-
     const amountOfGold = Number(goldCargo);
     if (amountOfGold <= 0 || isNaN(amountOfGold)) {
       Alert.alert("Erreur", "Veuillez entrer une quantité d'or valide.");
       return;
     }
-
     try {
       await POST(`/ships/ajouterOr/${selectedBoats[0].id}`, { Or: amountOfGold }, { Authorization: `Bearer ${token}` });
       await refetchBoats();
@@ -217,13 +236,11 @@ export default function Accueil({ route }: { route: { params?: RootStackParamLis
   const handleDeleteTresor = async (goldCargo: string) => {
     const token = await getToken();
     if (!token || !selectedBoats[0]) return;
-
     const amountOfGold = Number(goldCargo);
     if (amountOfGold <= 0 || isNaN(amountOfGold)) {
       Alert.alert("Erreur", "Veuillez entrer une quantité d'or valide.");
       return;
     }
-
     try {
       await POST(`/ships/retirerOr/${selectedBoats[0].id}`, { Or: amountOfGold }, { Authorization: `Bearer ${token}` });
       await refetchBoats();
@@ -267,27 +284,33 @@ export default function Accueil({ route }: { route: { params?: RootStackParamLis
   };
 
   const navigateBoat = async (idBoat: string, destination: string) => {
-    if (!idBoat) {
-      Alert.alert("Erreur", "Veuillez remplir tous les champs !");
-      return;
-    }
+  if (!idBoat || !destination) {
+    Alert.alert("Erreur", "Veuillez remplir tous les champs !");
+    return;
+  }
 
-    try {
-      const token = await getToken();
+  if (!(destination in ports)) {
+    Alert.alert("Erreur", "Port introuvable !");
+    return;
+  }
 
-      await POST(
-        `/ships/send/${encodeURIComponent(destination)}`,
-        { id: idBoat },
-        { Authorization: `Bearer ${token}` }
-      );
+  try {
+    const token = await getToken();
 
-      Alert.alert("Succès", `Bateau ${idBoat} envoyé vers ${destination} !`);
-      navigation.goBack();
-    } catch {
-      Alert.alert("Erreur", "Échec de l'envoi du bateau.");
-      navigation.goBack();
-    }
-  };
+    await POST(
+      `/ships/send/${encodeURIComponent(destination)}`,
+      { id: idBoat },
+      { Authorization: `Bearer ${token}` }
+    );
+
+    Alert.alert("Succès", `Bateau ${idBoat} envoyé vers ${destination} !`);
+    navigation.goBack();
+  } catch {
+    Alert.alert("Erreur", "Échec de l'envoi du bateau.");
+    navigation.goBack();
+  }
+};
+
 
   return (
     <ScrollView contentContainerStyle={styles.container}>
