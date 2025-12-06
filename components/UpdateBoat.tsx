@@ -10,19 +10,17 @@ import { useState } from "react";
 type RootStackParamList = {
   Login: undefined;
   AccueilHome: { userName?: string; boatList?: Boat[] };
-  UpdateBoat: { boatid: string }; // corrigé ici
+  UpdateBoat: { boatid: string };
 };
 
-// ✅ Typage automatique de la navigation et de la route
 type UpdateBoatProps = NativeStackScreenProps<RootStackParamList, "UpdateBoat">;
 
 export default function UpdateBoat({ route, navigation }: UpdateBoatProps) {
-  const { boatid } = route.params; // ✅ accessible et typé automatiquement
+  const { boatid } = route.params; 
 /*
 Parce que React Navigation passe automatiquement deux props (route et navigation) à chaque écran.
  En utilisant NativeStackScreenProps, tu dis à TypeScript qu’il s’agit d’un écran de navigation,
  donc il sait comment typer ces props et évite les erreurs.*/
-  // États pour le formulaire
   const [name, setName] = useState("");
   const [goldCargo, setGoldCargo] = useState("");
   const [captain, setCaptain] = useState("");
@@ -30,7 +28,6 @@ Parce que React Navigation passe automatiquement deux props (route et navigation
 const tokenStorage = useLocalStorage<string>("authToken");
   const { PATCH } = useFetch();
 const tokenRecuperation = async (): Promise<string | null> => {
-  console.log("Récupération du token stocké");
   const getedToken = await tokenStorage.getItem();
   return getedToken;
 };
@@ -55,10 +52,9 @@ const tokenRecuperation = async (): Promise<string | null> => {
       crewSize: crewSizeNum,
     };
 
-    console.log("📤 Payload à envoyer:", JSON.stringify(boatData));
 
     try {
-      const token = await tokenRecuperation(); // récupère le token
+      const token = await tokenRecuperation(); 
       if (!token) {
         Alert.alert("Erreur", "Token manquant.");
         return;
@@ -68,20 +64,7 @@ const tokenRecuperation = async (): Promise<string | null> => {
       });
       Alert.alert("Succès", "Bateau mis à jour !");
       navigation.goBack(); 
-   /*!!Problèem que ca cause : Quand tu fais un navigation.goBack() (ou que tu retournes à un écran déjà monté),
- le composant n’est pas recréé, il est juste rendu à nouveau.
- Conséquence : les useEffect qui dépendent de [] (montage initial) ne se déclenchent pas, 
- car le composant na jamais été “unmonté” et “remonté”, il est toujours là en mémoire.
- 
- 
- Solution : mettre un focus dans l'ancien useEffect a cahque fois que ca va  lui demander de retourner ca va 
- mettre écrna actif et puis ca va changer */
-
-   // ✅ revient simplement à l’écran précédent
-/*navigate("AccueilHome", {...}) → saute vers un écran spécifique avec params.
-goBack() → revient à l’écran précédent dans la pile, sans se soucier des params. */
     } catch (error) {
-      console.error("Erreur lors de la mise à jour :", error);
       Alert.alert("Erreur", "Impossible de mettre à jour le bateau.");
     }
   };
@@ -122,7 +105,7 @@ goBack() → revient à l’écran précédent dans la pile, sans se soucier des
   />
  <Button 
         title="modifier le bateau" 
-       onPress={() => handleSubmit()} // Passe l'ID du bateau à supprimer
+       onPress={() => handleSubmit()} 
        testID="buttonModifierBateau"
       />
 </ScrollView>

@@ -27,7 +27,7 @@ export default function PirateAdmin({
   nombreOr,
   setNombreOr
 }: Props) {
-  // États pour le formulaire
+
   const [name, setName] = useState("");
   const [captain, setCaptain] = useState("");
   const [goldCargo, setGoldCargo] = useState("");
@@ -37,7 +37,7 @@ const [status, setStatus] = useState<Boat["status"]>("docked")
   return (
     <View style={styles.container}>
       <Text style={styles.title}>Formulaire Bateau</Text>
-      {/* Intégration du formulaire */}
+      
       <FormulaireAjouterBoat
         name={name}
         setName={setName}

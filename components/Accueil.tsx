@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from "react";
 import { ScrollView, Text, Button, StyleSheet, Alert } from "react-native";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
@@ -10,7 +9,7 @@ import PirateNormale from "./PirateNormale";
 import PirateAdmin from "./PirateADmin";
 import { Boat, BoatRequest, user } from "../types/UserType.types";
 import * as jwtDecodeModule from "jwt-decode";
-//Fonctionnel 
+
 type RootStackParamList = {
   Login: undefined;
   AccueilHome: { userName?: string; password?: string; boatList?: Boat[] };
@@ -26,29 +25,34 @@ export default function Accueil({ route }: { route: { params?: RootStackParamLis
   const [ports, setPorts] = useState<string[]>([]);
   const [isAdmin, setIsAdmin] = useState<boolean>(false);
   const [isTransfert, setIsTransfert] = useState<boolean>(false);
-  const [destination, setDestination] = useState<string>(""); // pour navigation
-  const [nombreOr, setNombreOr] = useState<string>(""); // pour transfert
+  const [destination, setDestination] = useState<string>("");
+  const [nombreOr, setNombreOr] = useState<string>("");
+
   const { POST, DELETE, GET } = useFetch();
   const tokenStorage = useLocalStorage<string>("authToken");
   const isFocused = useIsFocused();
 
   const getToken = async (): Promise<string | null> => await tokenStorage.getItem();
 
-  /** ✅ Fonction pour recharger les bateaux */
   const refetchBoats = async () => {
     const token = await getToken();
     if (!token) return;
+
     const listboats = await GET<Boat[]>("/ships", { Authorization: `Bearer ${token}` });
-    console.log("refetchBoats -> fetched boats:", listboats);
-    // force a new array instance so React re-renders
-    const normalized = listboats ? [...listboats] : [];
-    setBoatListe(normalized);
-    // update selectedBoats to point to the new objects from the refreshed list
-    setSelectedBoats((prev) => (prev.length > 0 ? prev.map((sb) => normalized.find((b) => b.id === sb.id) || sb) : []));
-    return normalized;
+    const normalizedBoats = listboats ? [...listboats] : [];
+    setBoatListe(normalizedBoats);
+
+    setSelectedBoats(previousSelectedBoats =>
+      previousSelectedBoats.length > 0
+        ? previousSelectedBoats.map(selectedBoat =>
+            normalizedBoats.find(boat => boat.id === selectedBoat.id) || selectedBoat
+          )
+        : []
+    );
+
+    return normalizedBoats;
   };
 
-  /** ✅ Fetch boats & ports */
   useEffect(() => {
     const fetchBoats = async () => {
       const token = await getToken();
@@ -56,7 +60,6 @@ export default function Accueil({ route }: { route: { params?: RootStackParamLis
 
       try {
         const decoded = jwtDecodeModule.jwtDecode(token) as { isAdmin: boolean };
-        console.log("🔑 Token décodé, isAdmin:", decoded.isAdmin);
         setIsAdmin(decoded.isAdmin);
       } catch (err) {
         console.error("Erreur décodage token:", err);
@@ -70,6 +73,7 @@ export default function Accueil({ route }: { route: { params?: RootStackParamLis
     const fetchPorts = async () => {
       const token = await getToken();
       if (!token) return;
+
       const portsList = await GET<string[]>("/ships/send/userlist", { Authorization: `Bearer ${token}` });
       setPorts(portsList || []);
     };
@@ -80,18 +84,11 @@ export default function Accueil({ route }: { route: { params?: RootStackParamLis
     }
   }, [isFocused]);
 
-  /** ✅ CRUD Actions */
-  const handleSubmit = async (
-    name: string,
-    captain: string,
-    goldCargo: string,
-    crewSize: string,
-    status: Boat["status"]
-  ) => {
+  const handleSubmit = async (name: string, captain: string, goldCargo: string, crewSize: string, status: Boat["status"]) => {
     const token = await getToken();
     if (!token) return;
 
-    if (isNaN(parseInt(goldCargo)) || isNaN(parseInt(crewSize))) {
+    if (isNaN(Number(goldCargo)) || isNaN(Number(crewSize))) {
       Alert.alert("Erreur", "Veuillez entrer des valeurs numériques valides.");
       return;
     }
@@ -99,14 +96,24 @@ export default function Accueil({ route }: { route: { params?: RootStackParamLis
     const newBoat: BoatRequest = {
       name,
       captain,
-      goldCargo: parseInt(goldCargo, 10),
-      crewSize: parseInt(crewSize, 10),
+      goldCargo: Number(goldCargo),
+      crewSize: Number(crewSize),
       status,
     };
 
-    await POST("/ships", newBoat, { Authorization: `Bearer ${token}` });
-    setBoatListe((prev) => [...prev, { ...newBoat, id: Date.now().toString() } as Boat]);
-    await refetchBoats(); // Recharger après ajout
+    try {
+      await POST("/ships", newBoat, { Authorization: `Bearer ${token}` });
+
+      setBoatListe(previousBoats => [
+        ...previousBoats,
+        { ...newBoat, id: Date.now().toString() } as Boat,
+      ]);
+
+      await refetchBoats();
+    } catch (error) {
+      console.error("Erreur lors de l'ajout du bateau :", error);
+      Alert.alert("Erreur d'ajout", "Échec de la création du bateau. Veuillez réessayer.");
+    }
   };
 
   const handleUpdate = (id: string) => navigation.navigate("UpdateBoat", { boatid: id });
@@ -114,14 +121,27 @@ export default function Accueil({ route }: { route: { params?: RootStackParamLis
   const handleDelete = async (id: string) => {
     const token = await getToken();
     if (!token) return;
-    await DELETE(`/ships/${id}`, { Authorization: `Bearer ${token}` });
-    setBoatListe((prev) => prev.filter((b) => b.id !== id));
-    await refetchBoats(); // Recharger après suppression
+
+    try {
+      await DELETE(`/ships/${id}`, { Authorization: `Bearer ${token}` });
+
+      setBoatListe(previousBoats => previousBoats.filter(boat => boat.id !== id));
+
+      await refetchBoats();
+    } catch (error) {
+      Alert.alert("Erreur de suppression", "Échec de la suppression du bateau. Veuillez réessayer.");
+    }
   };
 
   const handleDeleteSelected = async () => {
-    await Promise.all(selectedBoats.map((b) => handleDelete(b.id)));
-    setSelectedBoats([]);
+    if (selectedBoats.length === 0) return;
+
+    try {
+      await Promise.all(selectedBoats.map(selectedBoat => handleDelete(selectedBoat.id)));
+      setSelectedBoats([]);
+    } catch (error) {
+      Alert.alert("Erreur Multiple", "Une erreur est survenue lors de la suppression d'au moins un bateau.");
+    }
   };
 
   const handleLogout = async () => {
@@ -130,27 +150,32 @@ export default function Accueil({ route }: { route: { params?: RootStackParamLis
     navigation.navigate("Login");
   };
 
-  /** ✅ Sélection */
   const toggleSelectBoat = (id: string) => {
-    setSelectedBoats((prev) => {
-      const isSelected = prev.some((b) => b.id === id);
-      return isSelected ? prev.filter((b) => b.id !== id) : [...prev, boatListe.find((b) => b.id === id)!];
+    setSelectedBoats(previousSelectedBoats => {
+      const alreadySelected = previousSelectedBoats.some(selectedBoat => selectedBoat.id === id);
+
+      return alreadySelected
+        ? previousSelectedBoats.filter(selectedBoat => selectedBoat.id !== id)
+        : [...previousSelectedBoats, boatListe.find(boat => boat.id === id)!];
     });
   };
 
-  /** ✅ Actions Pirates */
   const handleAddequipage = async (crewSize: string) => {
     const token = await getToken();
     if (!token || !selectedBoats[0]) return;
 
     const crewToAdd = Number(crewSize);
-    if (isNaN(crewToAdd) || crewToAdd <= 0) {
+    if (crewToAdd <= 0 || isNaN(crewToAdd)) {
       Alert.alert("Erreur", "Veuillez entrer un nombre valide pour l'équipage.");
       return;
     }
 
-    await POST(`/ships/ajouterEquipage/${selectedBoats[0].id}`, { newCrew: crewToAdd }, { Authorization: `Bearer ${token}` });
-    await refetchBoats();
+    try {
+      await POST(`/ships/ajouterEquipage/${selectedBoats[0].id}`, { newCrew: crewToAdd }, { Authorization: `Bearer ${token}` });
+      await refetchBoats();
+    } catch {
+      Alert.alert("Erreur", "Échec de l'ajout d'équipage.");
+    }
   };
 
   const handleDeleteEquipage = async (crewSize: string) => {
@@ -158,41 +183,53 @@ export default function Accueil({ route }: { route: { params?: RootStackParamLis
     if (!token || !selectedBoats[0]) return;
 
     const crewToRemove = Number(crewSize);
-    if (isNaN(crewToRemove) || crewToRemove <= 0) {
+    if (crewToRemove <= 0 || isNaN(crewToRemove)) {
       Alert.alert("Erreur", "Veuillez entrer un nombre valide pour l'équipage.");
       return;
     }
 
-    await POST(`/ships/retirerEquipage/${selectedBoats[0].id}`, { newCrew: crewToRemove }, { Authorization: `Bearer ${token}` });
-    await refetchBoats();
+    try {
+      await POST(`/ships/retirerEquipage/${selectedBoats[0].id}`, { newCrew: crewToRemove }, { Authorization: `Bearer ${token}` });
+      await refetchBoats();
+    } catch {
+      Alert.alert("Erreur", "Échec du retrait d'équipage.");
+    }
   };
 
   const handleAddTresor = async (goldCargo: string) => {
     const token = await getToken();
     if (!token || !selectedBoats[0]) return;
 
-    const quantiteOr = Number(goldCargo);
-    if (isNaN(quantiteOr) || quantiteOr <= 0) {
-      Alert.alert("Erreur", "Veuillez entrer un nombre valide pour l'or.");
+    const amountOfGold = Number(goldCargo);
+    if (amountOfGold <= 0 || isNaN(amountOfGold)) {
+      Alert.alert("Erreur", "Veuillez entrer une quantité d'or valide.");
       return;
     }
 
-    await POST(`/ships/ajouterOr/${selectedBoats[0].id}`, { Or: quantiteOr }, { Authorization: `Bearer ${token}` });
-    await refetchBoats();
+    try {
+      await POST(`/ships/ajouterOr/${selectedBoats[0].id}`, { Or: amountOfGold }, { Authorization: `Bearer ${token}` });
+      await refetchBoats();
+    } catch {
+      Alert.alert("Erreur", "Échec de l'ajout de trésor.");
+    }
   };
 
   const handleDeleteTresor = async (goldCargo: string) => {
     const token = await getToken();
     if (!token || !selectedBoats[0]) return;
 
-    const quantiteOr = Number(goldCargo);
-    if (isNaN(quantiteOr) || quantiteOr <= 0) {
-      Alert.alert("Erreur", "Veuillez entrer un nombre valide pour l'or.");
+    const amountOfGold = Number(goldCargo);
+    if (amountOfGold <= 0 || isNaN(amountOfGold)) {
+      Alert.alert("Erreur", "Veuillez entrer une quantité d'or valide.");
       return;
     }
 
-    await POST(`/ships/retirerOr/${selectedBoats[0].id}`, { Or: quantiteOr }, { Authorization: `Bearer ${token}` });
-    await refetchBoats();
+    try {
+      await POST(`/ships/retirerOr/${selectedBoats[0].id}`, { Or: amountOfGold }, { Authorization: `Bearer ${token}` });
+      await refetchBoats();
+    } catch {
+      Alert.alert("Erreur", "Échec du retrait de trésor.");
+    }
   };
 
   const handleTransfer = async () => {
@@ -200,65 +237,80 @@ export default function Accueil({ route }: { route: { params?: RootStackParamLis
       Alert.alert("Erreur", "Veuillez remplir tous les champs !");
       return;
     }
+
     const fromBoat = selectedBoats[0];
     const toBoat = selectedBoats[1];
-    const amount = parseInt(nombreOr, 10);
+    const amount = Number(nombreOr);
 
     try {
       const token = await getToken();
       if (!token) return;
+
       await POST(`/ships/transferGold/${fromBoat.id}/${toBoat.id}`, { amount }, { Authorization: `Bearer ${token}` });
+
       Alert.alert("Succès", `Transfert de ${amount} or effectué !`);
-      setIsTransfert((prev) => !prev);
+      setIsTransfert(previous => !previous);
       await refetchBoats();
-    } catch (error) {
-      console.error("Erreur lors du transfert :", error);
+    } catch {
       Alert.alert("Erreur", "Le transfert a échoué.");
     }
   };
 
-  const handleNavigate = (destination:string) => {
+  const handleNavigate = (destination: string) => {
     try {
-      for (const Boat of selectedBoats) {
-        navigateBoat(Boat.id,destination);
+      for (const boat of selectedBoats) {
+        navigateBoat(boat.id, destination);
       }
     } catch (error) {
       console.error("Erreur lors de la navigation des bateaux :", error);
     }
   };
-const navigateBoat = async (idBoat: string,destination:string) => {
-  console.log("Navigation du bateau avec l'ID :", idBoat);
-  console.log("je susi entree dans navigate boat");
+
+  const navigateBoat = async (idBoat: string, destination: string) => {
     if (!idBoat) {
-      alert("Veuillez remplir tous les champs !");
+      Alert.alert("Erreur", "Veuillez remplir tous les champs !");
       return;
     }
+
     try {
       const token = await getToken();
-        console.log("voici mon token ",token);
-           console.log("arrive a mon ships/send");
-  await POST(`/ships/send/${encodeURIComponent(destination)}`, 
-  { id: idBoat },  // corps
-  { Authorization: `Bearer ${token}` } // headers
-);
 
-      alert(`Bateau ${idBoat} envoyé vers ${destination} !`);
-         navigation.goBack(); 
-    } catch (error) {
-      console.error("Erreur lors de l'envoi du bateau :", error);
-      alert("Échec de l'envoi du bateau. Vérifiez la console pour plus d'infos.");
-         navigation.goBack(); 
+      await POST(
+        `/ships/send/${encodeURIComponent(destination)}`,
+        { id: idBoat },
+        { Authorization: `Bearer ${token}` }
+      );
+
+      Alert.alert("Succès", `Bateau ${idBoat} envoyé vers ${destination} !`);
+      navigation.goBack();
+    } catch {
+      Alert.alert("Erreur", "Échec de l'envoi du bateau.");
+      navigation.goBack();
     }
   };
+
   return (
     <ScrollView contentContainerStyle={styles.container}>
-      <Text style={styles.title}>Bienvenue {userName} {isAdmin ? " vous êtes admin" : "vous êtes un pirate normale"} </Text>
-      <Text style={styles.subtext}>{boatListe.length > 0 ? `Nombre de bateaux : ${boatListe.length}` : "Aucun bateau"}</Text>
+      <Text style={styles.title}>
+        Bienvenue {userName} {isAdmin ? "vous êtes admin" : "vous êtes un pirate normal"}
+      </Text>
 
-      <TheBoat boats={boatListe} selectedBoats={selectedBoats} toggleSelectBoat={toggleSelectBoat} handleDelete={handleDelete} handleUpdate={handleUpdate} />
+      <Text style={styles.subtext}>
+        {boatListe.length > 0 ? `Nombre de bateaux : ${boatListe.length}` : "Aucun bateau"}
+      </Text>
 
-      {selectedBoats.length > 0 && <Button title={`Supprimer ${selectedBoats.length} bateau(x)`} onPress={handleDeleteSelected} />}
-        {isAdmin}
+      <TheBoat
+        boats={boatListe}
+        selectedBoats={selectedBoats}
+        toggleSelectBoat={toggleSelectBoat}
+        handleDelete={handleDelete}
+        handleUpdate={handleUpdate}
+      />
+
+      {selectedBoats.length > 0 && (
+        <Button title={`Supprimer ${selectedBoats.length} bateau(x)`} onPress={handleDeleteSelected} />
+      )}
+
       {!isAdmin && selectedBoats.length > 0 && (
         <PirateNormale
           selectedBoats={selectedBoats}

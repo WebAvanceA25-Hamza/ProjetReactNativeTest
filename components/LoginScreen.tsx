@@ -14,7 +14,7 @@ import useFetch from "../hooks/useFetch";
 import { user,Boat } from "../types/UserType.types";
 import useLocalStorage from "../hooks/AsyncStorage";
 import { jwtDecode } from "jwt-decode";
-// 🔹 Types de navigation
+
 type RootStackParamList = {
   Login: undefined;
   AccueilHome: {
@@ -35,13 +35,13 @@ export default function LoginScreen() {
   const [nom, setNom] = useState("");
   const [password, setPassword] = useState("");
   const [boatListe, setBoatList] = useState<Boat[]>([]);
-  // 🔹 Fonction pour récupérer le token stocké
+  //  Fonction pour récupérer le token stocké
   const tokenRecuperation = async (): Promise<string | null> => {
     console.log("Récupération du token stocké...");
     const getedToken = await tokenStorage.getItem();
     return getedToken;
   };
-  // 🔹 Charger la liste de bateaux après connexion
+  //  Charger la liste de bateaux après connexion
   useEffect(() => {
     const fetchBoats = async () => {
       const token = await tokenRecuperation();
@@ -55,14 +55,14 @@ export default function LoginScreen() {
     fetchBoats();
   }, []);
 
-  // 🔹 Type minimal du payload JWT
+
   type TokenPayload = {
     email: string;
     isAdmin: boolean;
     exp?: number;
   };
 
-  // 🔐 Fonction de connexion
+
   const handleLogin = async () => {
     console.log("🔐 Tentative de connexion...");
     if (!nom ||  !password) {
@@ -74,36 +74,19 @@ export default function LoginScreen() {
       password:password,
     };
     try {
-      console.log("📤 Envoi des données de connexion");
-      console.log(newUser);
-      // Appel API login
       const response = await POST<user, { token: string }>("/auth/login", newUser);
-      console.log("✅ Réponse du serveur :", response);
       if (!response?.token) {
         Alert.alert("Erreur", "Token manquant dans la réponse du serveur.");
         return;
       }
-      // ✅ Stockage du token
       await tokenStorage.setItem(response.token);
-      console.log("✅ Token stocké :", response.token);
-      // 🔍 Décodage du token JWT
       const decoded: TokenPayload = jwtDecode<TokenPayload>(response.token);
-      console.log("🗝️ Token décodé :", decoded.isAdmin);
-      // Vérifier l’expiration du token
       if (decoded.exp && decoded.exp * 1000 < Date.now()) {
         Alert.alert("Session expirée", "Veuillez vous reconnecter.");
         await tokenStorage.removeItem();
         return;
       }
-      // Vérifier le rôle
-      if (decoded.isAdmin) {
-        console.log("👑 L'utilisateur est un administrateur.");
-      } else {
-        console.log("🙅‍♂️ L'utilisateur n'est pas un administrateur.");
-      }
-      console.log(
-        `⏰ Expiration du token : ${new Date((decoded.exp ?? 0) * 1000)}`
-      );
+    
       // 🚀 Navigation vers l'accueil
       navigation.navigate("AccueilHome", {
         userName: nom,
@@ -111,7 +94,6 @@ export default function LoginScreen() {
         boatList: boatListe,
       });
     } catch (error) {
-      console.error("❌ Erreur connexion :", error);
       Alert.alert("Erreur", "Impossible de se connecter.");
     }
   };
